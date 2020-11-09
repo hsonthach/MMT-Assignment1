@@ -1,0 +1,2 @@
+python ./ClientLauncher.py DESKTOP-OQM18PQ 8080 16385 movie.Mjpeg
+python Server.py 8080
