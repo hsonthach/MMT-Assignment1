@@ -4,7 +4,10 @@ import traceback
 import sys
 import threading
 import socket
-from PIL import Image, ImageTk
+from PIL import ImageTk
+import PIL.Image
+
+
 from tkinter import *
 
 import tkinter.messagebox
@@ -215,8 +218,7 @@ class Client:
 
     def updateMovie(self, imageFile):
         """Update the image file as video frame in the GUI."""
-
-        photo = ImageTk.PhotoImage(Image.open(imageFile))
+        photo = ImageTk.PhotoImage(PIL.Image.open(imageFile))
 
         self.label.configure(image=photo, height=288)
 
