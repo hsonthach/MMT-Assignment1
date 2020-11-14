@@ -44,8 +44,10 @@ class Client:
 
         self.master = master
 
+        # Set up func that trigger whenever the window closed
         self.master.protocol("WM_DELETE_WINDOW", self.handler)
 
+        # Setup button and event handler for each of them
         self.createWidgets()
 
         self.serverAddr = serveraddr
@@ -165,7 +167,6 @@ class Client:
             try:
 
                 data = self.rtpSocket.recv(20480)
-
                 if data:
 
                     rtpPacket = RtpPacket()
@@ -174,7 +175,7 @@ class Client:
 
                     currFrameNbr = rtpPacket.seqNum()
 
-                    print("Current Seq Num: " + str(currFrameNbr))
+                    print("Current Frame Num: " + str(currFrameNbr))
 
                     if currFrameNbr > self.frameNbr:  # Discard the late packet
 
@@ -183,8 +184,8 @@ class Client:
                         self.updateMovie(self.writeFrame(
                             rtpPacket.getPayload()))
 
-            except:
-
+            except Exception as e:
+                print("RTP ", e)
                 # Stop listening upon requesting PAUSE or TEARDOWN
 
                 if self.playEvent.isSet():
@@ -215,6 +216,16 @@ class Client:
         file.close()
 
         return cachename
+    '''
+    * Input: cache image file name
+    * Precondition:
+    * Output:
+    * Postcondition:
+    * Description: update label.image
+    * Example: Input:cache-532373 -> label.image = PIL.Image(Input:cache-532373)
+    * Source:
+    * Exception:
+    '''
 
     def updateMovie(self, imageFile):
         """Update the image file as video frame in the GUI."""
@@ -223,6 +234,16 @@ class Client:
         self.label.configure(image=photo, height=288)
 
         self.label.image = photo
+    '''
+    * Input:
+    * Precondition:
+    * Output:
+    * Postcondition:
+    * Description: opens the RTSP socket to the server
+    * Example:
+    * Source:
+    * Exception:
+    '''
 
     def connectToServer(self):
         """Connect to the Server. Start a new RTSP/TCP session."""
@@ -230,7 +251,7 @@ class Client:
         self.rtspSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         try:
-
+            # Server also receive client ip adr & port adr
             self.rtspSocket.connect((self.serverAddr, self.serverPort))
 
         except:
@@ -252,7 +273,13 @@ class Client:
             self.rtspSeq += 1
 
             # Write the RTSP request to be sent.
-
+            # Insert the Transport header
+            """
+            Ex: 
+            SETUP movie.Mjpeg RTSP/1.0
+            CSeq: 1
+            Transport: RTP/UDP; client_port= 20001
+            """
             request = 'SETUP ' + self.fileName + ' RTSP/1.0\nCSeq: ' + \
                 str(self.rtspSeq) + \
                 '\nTransport: RTP/UDP; client_port= ' + str(self.rtpPort)
@@ -266,7 +293,12 @@ class Client:
         elif requestCode == self.PLAY and self.state == self.READY:
 
             self.rtspSeq += 1
-
+            """ 
+            Ex:
+            PLAY movie.Mjpeg RTSP/1.0
+            CSeq: 2
+            Session: 957291
+            """
             request = 'PLAY ' + self.fileName + ' RTSP/1.0\nCSeq: ' + \
                 str(self.rtspSeq) + '\nSession: ' + str(self.sessionId)
 
@@ -302,12 +334,22 @@ class Client:
         self.rtspSocket.send(request.encode())
 
         print('\nData sent:\n' + request)
+    '''
+    * Input:
+    * Precondition:
+    * Output:
+    * Postcondition:
+    * Description: Read the server’s response and parse
+    * Example:
+    * Source:
+    * Exception:
+    '''
 
     def recvRtspReply(self):
         """Receive RTSP reply from the server."""
 
         while True:
-
+            # Get reply message from server
             reply = self.rtspSocket.recv(1024)
 
             if reply:
@@ -324,6 +366,17 @@ class Client:
 
                 break
 
+    '''
+    * Input:
+    * Precondition:
+    * Output:
+    * Postcondition:
+    * Description:Parse RTSP reply and handle RTSP state changes
+    * Example:
+    * Source:
+    * Exception:
+    '''
+
     def parseRtspReply(self, data):
         """Parse the RTSP reply from the server."""
         lines = data.decode().split('\n')
@@ -337,9 +390,7 @@ class Client:
             session = int(lines[2].split(' ')[1])
 
             # New RTSP session ID
-
             if self.sessionId == 0:
-
                 self.sessionId = session
 
             # Process only if the session ID is the same
@@ -377,6 +428,16 @@ class Client:
                         # Flag the teardownAcked to close the socket.
 
                         self.teardownAcked = 1
+    '''
+    * Input:
+    * Precondition:
+    * Output:
+    * Postcondition:
+    * Description: Create a datagram socket for receiving RTP data and set the timeout on the socket to 0.5 seconds
+    * Example:
+    * Source:
+    * Exception:
+    '''
 
     def openRtpPort(self):
         """Open RTP socket binded to a specified port."""

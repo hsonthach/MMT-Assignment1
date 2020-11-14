@@ -42,7 +42,7 @@ class ServerWorker:
 
     def processRtspRequest(self, data):
         """Process RTSP request sent from the client."""
-        # Get the request type
+        # Get the request type by data
         request = data.split('\n')
         line1 = request[0].split(' ')
         requestType = line1[0]
@@ -115,29 +115,53 @@ class ServerWorker:
 
     def sendRtp(self):
         """Send RTP packets over UDP."""
+        '''
+        * Input:
+        * Precondition: 
+        * Output:
+        * Postcondition:
+        * Description: Send rtp packet to client
+        * Example: When the server receives the PLAY-request from the client
+        * Source:
+        * Exception:
+        '''
         while True:
+            # Sends the frame to the client over UDP every 50 milliseconds
             self.clientInfo['event'].wait(0.05)
 
             # Stop sending if request is PAUSE or TEARDOWN
             if self.clientInfo['event'].isSet():
                 break
 
+            # the server reads one video frame from the file
             data = self.clientInfo['videoStream'].nextFrame()
+
             if data:
                 frameNumber = self.clientInfo['videoStream'].frameNbr()
                 try:
                     address = self.clientInfo['rtspSocket'][1][0]
                     port = int(self.clientInfo['rtpPort'])
+
+                    # payload is (data, frameNumber)
+
+                    # creates an RtpPacket-object which is the RTP-encapsulation of the video frame
                     self.clientInfo['rtpSocket'].sendto(
                         self.makeRtp(data, frameNumber), (address, port))
                 except:
                     print("Connection Error")
-                    #print ('-'*60)
-                    # traceback.print_(exc(file=sys.stdout))
-                    #print ('-'*60)
 
     def makeRtp(self, payload, frameNbr):
         """RTP-packetize the video data."""
+        '''
+        * Input:
+        * Precondition:
+        * Output:
+        * Postcondition:
+        * Description:Creates an RtpPacket-object which is the RTP-encapsulation of the video frame
+        * Example:
+        * Source:
+        * Exception:
+        '''
         version = 2
         padding = 0
         extension = 0
