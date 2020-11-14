@@ -253,6 +253,7 @@ class Client:
         try:
             # Server also receive client ip adr & port adr
             self.rtspSocket.connect((self.serverAddr, self.serverPort))
+            self.setupMovie()
 
         except:
 
